@@ -113,10 +113,22 @@ shared class Queue(T)
 
 unittest
 {
+    enum amount = 100_000;
     auto queue = new shared(Queue!int);
-    foreach (i; 0 .. 10)
-        queue.push(i);
+    import std.stdio: writeln;
+    import std.datetime: StopWatch, AutoStart, TickDuration;
 
-    foreach (i; 0 .. 10)
+    auto sw = StopWatch();
+    sw.reset;
+    sw.start();
+
+    foreach (i; 0 .. amount)
+        queue.push(i);
+    foreach (i; 0 .. amount)
         assert(*queue.pop() == i);
+
+    sw.stop;
+
+    writeln("Duration: ", sw.peek.usecs, " microseconds");
+    writeln("Framerate: ", 1e6/sw.peek.usecs, " frames per second");
 }

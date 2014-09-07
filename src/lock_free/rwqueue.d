@@ -71,7 +71,7 @@ static assert(roundPow2!4 == 4);
 version (unittest)
 {
     import core.thread, std.concurrency;
-    enum amount = 10_000;
+    enum amount = 500_000;
 
     void push(T)(ref shared(RWQueue!T) queue)
     {
@@ -96,11 +96,22 @@ version (unittest)
 
 unittest
 {
+    import std.stdio: writeln;
+    import std.datetime: StopWatch, AutoStart, TickDuration;
+
+    auto sw = StopWatch();
+    sw.reset;
+    sw.start();
+
     shared(RWQueue!size_t) queue;
     auto t0 = new Thread({push(queue);}),
         t1 = new Thread({pop(queue);});
     t0.start(); t1.start();
     t0.join(); t1.join();
+
+    sw.stop;
+    writeln("Duration: ", sw.peek.usecs, " microseconds");
+    writeln("Framerate: ", 1e6/sw.peek.usecs, " frames per second");
 }
 
 unittest
