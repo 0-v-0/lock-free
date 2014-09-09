@@ -6,7 +6,7 @@ import core.atomic;
  A Lock-Free Single-Reader, Single-Writer (SRSW) FIFO queue.
  */
 shared struct RWQueue(T, size_t capacity = roundPow2!(PAGE_SIZE / T.sizeof))
-    if (T.sizeof <= size_t.sizeof) // TODO: Hangs for struct T { double x, y } if this a bug or a fundamental limitation.
+    if (T.sizeof <= size_t.sizeof) // TODO: Hangs for struct T { double x, y }, is this a bug or a fundamental limitation?
 {
     static assert(capacity > 0, "Cannot have a capacity of 0.");
     static assert(roundPow2!capacity == capacity, "The capacity must be a power of 2");
