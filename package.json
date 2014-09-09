@@ -9,13 +9,13 @@
 	"configurations": [
 	{
 		"name": "library",
-		"targetType": "library",
+		"targetType": "library"
 	},
 	{
 		"name": "unittest",
 		"targetType": "executable",
 		"targetName": "unittest",
 		"dflags": ["-main"]
-	},
+	}
 	]
 }
