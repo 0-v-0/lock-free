@@ -3,9 +3,10 @@ module lock_free.rwqueue;
 import core.atomic;
 
 /**
- * A lock-free single-reader, single-writer FIFO queue.
+ A Lock-Free Single-Reader, Single-Writer (SRSW) FIFO queue.
  */
 shared struct RWQueue(T, size_t capacity = roundPow2!(PAGE_SIZE / T.sizeof))
+    if (T.sizeof <= size_t.sizeof) // TODO: Hangs for struct T { double x, y } if this a bug or a fundamental limitation.
 {
     static assert(capacity > 0, "Cannot have a capacity of 0.");
     static assert(roundPow2!capacity == capacity, "The capacity must be a power of 2");
@@ -103,7 +104,9 @@ unittest
     sw.reset;
     sw.start();
 
-    shared(RWQueue!size_t) queue;
+    alias T = double;
+
+    shared(RWQueue!T) queue;
     auto t0 = new Thread({push(queue);}),
         t1 = new Thread({pop(queue);});
     t0.start(); t1.start();
