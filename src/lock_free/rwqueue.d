@@ -26,9 +26,9 @@ shared struct RWQueue(T, size_t capacity = roundPow2!(PAGE_SIZE / T.sizeof))
         return length == capacity;
     }
 
-    void push(shared(T) t)
+    void push(shared T t)
     in { assert(!full); }
-    body
+    do
     {
         immutable pos = atomicLoad!(MemoryOrder.acq)(_wpos);
         _data[pos & mask] = t;
@@ -37,7 +37,7 @@ shared struct RWQueue(T, size_t capacity = roundPow2!(PAGE_SIZE / T.sizeof))
 
     shared(T) pop()
     in { assert(!empty); }
-    body
+    do
     {
         immutable pos = atomicLoad!(MemoryOrder.acq)(_rpos);
         auto res = _data[pos & mask];

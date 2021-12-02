@@ -36,7 +36,7 @@ shared class AtomicDList(T)
     enum bottom = clearlsb(cast(shared(Node)*)0xdeadbeafdeadbeaf);
     //  enum bottom = null;
 
-    this ()
+    this()
     {
         this._head._prev = bottom;
         this._head._next = &this._tail;
