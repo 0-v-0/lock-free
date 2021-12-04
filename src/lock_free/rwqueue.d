@@ -97,24 +97,21 @@ version (unittest)
 
 unittest
 {
-    import std.stdio: writeln;
-    import std.datetime: StopWatch, AutoStart, TickDuration;
+    import std.stdio, std.datetime.stopwatch;
 
-    auto sw = StopWatch();
+    StopWatch sw;
     sw.reset;
-    sw.start();
+    sw.start;
 
-    alias T = double;
-
-    shared(RWQueue!T) queue;
+    shared(RWQueue!double) queue;
     auto t0 = new Thread({push(queue);}),
         t1 = new Thread({pop(queue);});
     t0.start(); t1.start();
     t0.join(); t1.join();
 
     sw.stop;
-    writeln("Duration: ", sw.peek.usecs, " microseconds");
-    writeln("Framerate: ", 1e6/sw.peek.usecs, " frames per second");
+    writeln("Duration: ", sw.peek.total!"usecs", " microseconds");
+    writeln("Framerate: ", 1e6/sw.peek.total!"usecs", " frames per second");
 }
 
 unittest

@@ -17,17 +17,17 @@ shared class AtomicDList(T)
 
         this(shared T payload) shared
         {
-            this._payload = payload;
+            _payload = payload;
         }
 
         @property shared(Node)* prev()
         {
-            return clearlsb(this._prev);
+            return clearlsb(_prev);
         }
 
         @property shared(Node)* next()
         {
-            return clearlsb(this._next);
+            return clearlsb(_next);
         }
     }
 
@@ -38,21 +38,21 @@ shared class AtomicDList(T)
 
     this()
     {
-        this._head._prev = bottom;
-        this._head._next = &this._tail;
-        this._tail._prev = &this._head;
-        this._tail._next = bottom;
+        _head._prev = bottom;
+        _head._next = &_tail;
+        _tail._prev = &_head;
+        _tail._next = bottom;
     }
 
     bool empty()
     {
-        return this._head._next == &this._tail;
+        return _head._next == &_tail;
     }
 
     void pushFront(shared T value)
     {
         auto newNode = new shared(Node)(value);
-        auto prev = &this._head;
+        auto prev = &_head;
         typeof(prev) next;
         do
         {
@@ -66,7 +66,7 @@ shared class AtomicDList(T)
     void pushBack(shared T value)
     {
         auto newNode = new shared(Node)(value);
-        auto next = &this._tail;
+        auto next = &_tail;
         auto prev = next._prev;
         while (true)
         {
@@ -82,10 +82,10 @@ shared class AtomicDList(T)
 
     @property shared(T)* popFront()
     {
-        auto prev = &this._head;
+        auto prev = &_head;
         while (true) {
             auto node = prev._next;
-            if (node == &this._tail)
+            if (node == &_tail)
                 return null;
 
             auto next = node._next;
@@ -106,7 +106,7 @@ shared class AtomicDList(T)
 
     @property shared(T)* popBack()
     {
-        auto next = &this._tail;
+        auto next = &_tail;
         auto node = next._prev;
         while (true)
         {
@@ -116,7 +116,7 @@ shared class AtomicDList(T)
                     node = clearlsb(next._prev);
                 continue;
             }
-            if (node == &this._head)
+            if (node == &_head)
                 return null;
 
             if (cas(&node._next, next, setlsb(next)))
@@ -132,7 +132,7 @@ shared class AtomicDList(T)
         assert(!haslsb(cursor));
         while (true)
         {
-            if (cursor == &this._tail)
+            if (cursor == &_tail)
                 return false;
             auto next = clearlsb(cursor._next);
             auto d = haslsb(next._next);
@@ -143,7 +143,7 @@ shared class AtomicDList(T)
                 continue;
             }
             cursor = next;
-            if (!d && next != &this._tail)
+            if (!d && next != &_tail)
                 assert(next != bottom);
             return true;
         }
@@ -154,19 +154,19 @@ shared class AtomicDList(T)
         assert(!haslsb(cursor));
         while (true)
         {
-            if (cursor == &this._head)
+            if (cursor == &_head)
                 return false;
 
             auto prev = clearlsb(cursor._prev);
             if (prev._next == cursor && !haslsb(cursor._next))
             {
                 cursor = prev;
-                if (prev != &this._head)
+                if (prev != &_head)
                     return true;
             }
             else if (haslsb(cursor._next))
             {
-                this.next(cursor);
+                next(cursor);
             }
             else
             {
@@ -179,7 +179,7 @@ shared class AtomicDList(T)
     {
         assert(!haslsb(cursor));
         auto node = cursor;
-        if (node == &this._head || node == &this._tail)
+        if (node == &_head || node == &_tail)
             return null;
 
         while (true)
@@ -211,8 +211,8 @@ shared class AtomicDList(T)
         assert(!haslsb(in_cursor));
         auto cursor = in_cursor;
 
-        if (cursor == &this._head)
-            return this.insertAfter(cursor, value);
+        if (cursor == &_head)
+            return insertAfter(cursor, value);
         auto node = new shared(Node)(value);
         shared(Node)* next;
         auto prev = clearlsb(cursor._prev);
@@ -241,8 +241,8 @@ shared class AtomicDList(T)
     void insertAfter(ref shared(Node)* cursor, shared T value)
     {
         assert(!haslsb(cursor));
-        if (cursor == &this._tail)
-            return this.insertBefore(cursor, value);
+        if (cursor == &_tail)
+            return insertBefore(cursor, value);
         auto node = new shared(Node)(value);
         auto prev = cursor;
         shared(Node)* next;
@@ -258,7 +258,7 @@ shared class AtomicDList(T)
             if (haslsb(prev._next))
             {
                 // delete node
-                return this.insertBefore(cursor, value);
+                return insertBefore(cursor, value);
             }
         }
         cursor = cast(shared)node;
@@ -326,8 +326,7 @@ private:
             {
                 if (haslsb(prev._prev))
                     continue;
-                else
-                    break;
+                break;
             }
         }
         return true;
@@ -362,17 +361,17 @@ synchronized class SyncedDList(T)
 
         this (shared T payload)
         {
-            this._payload = payload;
+            _payload = payload;
         }
 
         @property shared(Node)* next() shared
         {
-            return this._next;
+            return _next;
         }
 
         @property shared(Node)* prev() shared
         {
-            return this._prev;
+            return _prev;
         }
     }
 
@@ -383,143 +382,129 @@ synchronized class SyncedDList(T)
     string dump() const
     {
         auto res = "";
-        Node* pNode = cast(Node*)&this._head;
+        Node* pNode = cast(Node*)&_head;
         do
         {
             res ~= to!string(pNode) ~ "->";
             pNode = pNode._next;
-        } while (pNode != cast(Node*)&this._tail);
+        } while (pNode != cast(Node*)&_tail);
         res ~= to!string(pNode) ~ "\n";
         auto rev = "";
         do
         {
             rev = "<-" ~ to!string(pNode) ~ rev;
             pNode = pNode._prev;
-        } while (pNode != cast(Node*)&this._head);
+        } while (pNode != cast(Node*)&_head);
         rev = to!string(pNode) ~ rev;
         return res ~ rev;
     }
 
     this()
     {
-        this._head._prev = bottom;
-        this._head._next = &this._tail;
-        this._head.sentinel = 0xdeadbeef;
-        this._tail._prev = &this._head;
-        this._tail._next = bottom;
-        this._tail.sentinel = 0xdeadbeef;
+        _head._prev = bottom;
+        _head._next = &_tail;
+        _head.sentinel = 0xdeadbeef;
+        _tail._prev = &_head;
+        _tail._next = bottom;
+        _tail.sentinel = 0xdeadbeef;
     }
 
     bool empty()
     {
-        return this._head._next == &this._tail;
+        return _head._next == &_tail;
     }
 
     void pushFront(shared T value)
     {
         auto newNode = new shared(Node)(value);
-        newNode._next = this._head._next;
-        newNode._prev = &this._head;
-        this._head._next = newNode;
+        newNode._next = _head._next;
+        newNode._prev = &_head;
+        _head._next = newNode;
         newNode._next._prev = newNode;
     }
 
     void pushBack(shared T value)
     {
         auto newNode = new shared(Node)(value);
-        newNode._next = &this._tail;
-        newNode._prev = this._tail._prev;
-        this._tail._prev = newNode;
+        newNode._next = &_tail;
+        newNode._prev = _tail._prev;
+        _tail._prev = newNode;
         newNode._prev._next = newNode;
     }
 
     @property shared(T)* popFront()
     {
-        if (this.empty)
+        if (empty)
             return null;
-        else
-        {
-            shared(Node)* node = this._head._next;
-            this._head._next = node._next;
-            node._next._prev = &this._head;
-            return &node._payload;
-        }
+
+        shared(Node)* node = _head._next;
+        _head._next = node._next;
+        node._next._prev = &_head;
+        return &node._payload;
     }
 
     @property shared(T)* popBack()
     {
-        if (this.empty)
+        if (empty)
             return null;
-        else
-        {
-            shared(Node)* node = this._tail._prev;
-            this._tail._prev = node._prev;
-            node._prev._next = &this._tail;
-            return &node._payload;
-        }
+
+        shared(Node)* node = _tail._prev;
+        _tail._prev = node._prev;
+        node._prev._next = &_tail;
+        return &node._payload;
     }
 
     bool next(ref shared(Node)* cursor)
     {
-        if (cursor == &this._tail)
+        if (cursor == &_tail)
             return false;
-        else
-        {
-            cursor = cursor._next;
-            return true;
-        }
+
+        cursor = cursor._next;
+        return true;
     }
 
     bool prev(ref shared(Node)* cursor)
     {
-        if (cursor == &this._head)
+        if (cursor == &_head)
             return false;
-        else
-        {
-            cursor = cursor._prev;
-            return true;
-        }
+
+        cursor = cursor._prev;
+        return true;
     }
 
     shared(T)* deleteNode(ref shared(Node)* cursor)
     {
-        if (cursor == &this._head || cursor == &this._tail)
+        if (cursor == &_head || cursor == &_tail)
             return null;
-        else
-        {
-            shared(Node)* node = cursor;
-            node._prev._next = node._next;
-            node._next._prev = node._prev;
-            return &node._payload;
-        }
+
+        shared(Node)* node = cursor;
+        node._prev._next = node._next;
+        node._next._prev = node._prev;
+        return &node._payload;
     }
 
     void insertBefore(ref shared(Node)* cursor, shared T value)
     {
-        if (cursor == &this._head)
-            return this.insertAfter(cursor, value);
-        else
-        {
-            auto node = cast(shared)new Node(value);
-            node._next = cursor;
-            node._prev = cursor._prev;
-            cursor._prev._next = node;
-            cursor._prev = node;
-        }
+        if (cursor == &_head)
+            return insertAfter(cursor, value);
+
+        auto node = cast(shared)new Node(value);
+        node._next = cursor;
+        node._prev = cursor._prev;
+        cursor._prev._next = node;
+        cursor._prev = node;
     }
 
     void insertAfter(ref shared(Node)* cursor, in T value)
     {
-        if (cursor == &this._tail)
-            return this.insertBefore(cursor, value);
-        else
-        {
-            auto node = cast(shared)new Node(value);
-            node._prev = cursor;
-            node._next = cursor._next;
-            cursor._next._prev = node;
-            cursor._next = node;
-        }
+        if (cursor == &_tail)
+            return insertBefore(cursor, value);
+
+        auto node = cast(shared)new Node(value);
+        node._prev = cursor;
+        node._next = cursor._next;
+        cursor._next._prev = node;
+        cursor._next = node;
     }
 }
 
@@ -529,17 +514,17 @@ synchronized class SyncedDList(T)
 
 private:
 
-static bool haslsb(T)(T* p)
+bool haslsb(T)(T* p)
 {
     return (cast(size_t)p & 1) != 0;
 }
 
-static T* setlsb(T)(T* p)
+T* setlsb(T)(T* p)
 {
     return cast(T*)(cast(size_t)p | 1);
 }
 
-static T* clearlsb(T)(T* p)
+T* clearlsb(T)(T* p)
 {
     return cast(T*)(cast(size_t)p & ~1);
 }
@@ -582,7 +567,7 @@ unittest
 
 struct Heavy
 {
-    this (size_t val)
+    this(size_t val)
     {
         this.val[0] = val;
     }
@@ -591,15 +576,15 @@ struct Heavy
 
 struct Light
 {
-    this (size_t val)
+    this(size_t val)
     {
-        this.val = val;
+        val = val;
     }
     size_t val;
 }
 
 alias Light TPayload;
-alias shared AtomicDList!(TPayload) TList;
+alias shared AtomicDList!TPayload TList;
 //alias SyncedDList!(TPayload) TList;
 shared TList sList;
 enum amount = 10_000;
@@ -687,28 +672,25 @@ void iterator(Position Where)()
 {
     size_t max_steps;
     size_t times = amount;
-    static if (Where == Position.Front)
+    do
     {
-        do
+        size_t steps;
+
+        static if (Where == Position.Front)
         {
-            size_t steps;
             auto cursor = &sList._head;
             while (sList.next(cursor)) { ++steps; }
             assert(cursor == &sList._tail);
-            max_steps = max(max_steps, steps);
-        } while (--times);
-    }
-    else
-    {
-        do
+        }
+        else
         {
-            size_t steps;
             auto cursor = &sList._tail;
             while (sList.prev(cursor)) { ++steps; }
             assert(cursor == &sList._head);
-            max_steps = max(max_steps, steps);
-        } while (--times);
-    }
+        }
+
+        max_steps = max(max_steps, steps);
+    } while (--times);
     writefln("size %s", max_steps);
 }
 
@@ -716,8 +698,8 @@ unittest
 {
     import std.parallelism : totalCPUs;
 
-    sList = new shared(TList)();
-    size_t count;
+    sList = new shared TList();
+    size_t count = void;
     shared(TList.Node)* p;
 
     foreach(i; 0 .. totalCPUs)
@@ -745,7 +727,7 @@ unittest
         p = p.next;
     }
     writeln("queue empty? -> ", count);
-    assert(count == 0, to!string(count));
+    assert(count == 0, count.to!string);
 
     foreach(i; 0 .. totalCPUs)
     {
@@ -772,7 +754,7 @@ unittest
         p = p.next;
     }
     writeln("list empty? -> ", count);
-    assert(count == 0, to!string(count));
+    assert(count == 0, count.to!string);
 
     foreach(i; 0 .. totalCPUs)
     {
@@ -798,12 +780,12 @@ unittest
 
     thread_joinAll();
     count = 0;
-    p = sList._head.next;
-    while (p !is &sList._tail)
+
+    for (p = sList._head.next; p !is &sList._tail; p = p.next)
     {
         ++count;
-        p = p.next;
+
     }
     writeln("mixed empty? -> ", count);
-    assert(count == 0, to!string(count));
+    assert(count == 0, count.to!string);
 }

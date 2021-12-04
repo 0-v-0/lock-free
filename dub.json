@@ -7,15 +7,15 @@
 	"dependencies": {
 	},
 	"configurations": [
-	{
-		"name": "library",
-		"targetType": "library"
-	},
-	{
-		"name": "unittest",
-		"targetType": "executable",
-		"targetName": "unittest",
-		"dflags": ["-main"]
-	}
+		{
+			"name": "library",
+			"targetType": "library"
+		},
+		{
+			"name": "unittest",
+			"targetType": "executable",
+			"targetName": "unittest",
+			"dflags": ["-main"]
+		}
 	]
 }
